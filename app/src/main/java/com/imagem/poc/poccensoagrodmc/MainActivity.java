@@ -38,7 +38,7 @@ public class MainActivity extends AppCompatActivity {
         lvEnderecos = (ListView) findViewById(R.id.listViewEnderecos);
         List<String> alEnderecos = new ArrayList<String>();
         alEnderecos.add("Endereço 1");
-        alEnderecos.add("Endereco 2");
+        alEnderecos.add("Endereço 2");
 
         ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(
                 this,
