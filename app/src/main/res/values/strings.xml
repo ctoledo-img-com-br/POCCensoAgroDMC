@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">POC Censo Agro DMC</string>
+    <string name="zoom_full">Extensão inicial</string>
+    <string name="zoom_in">Zoom In</string>
+    <string name="zoom_out">Zomm Out</string>
 </resources>

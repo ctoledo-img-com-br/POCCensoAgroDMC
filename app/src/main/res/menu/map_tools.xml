@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:visible="true">
+    
+    <item android:id="@+id/zoomToFullExtent"
+        android:title="@string/zoom_full"
+        android:icon="@mipmap/ic_launcher"/>
+    <item android:id="@+id/zoomIn"
+        android:title="@string/zoom_in"
+        android:icon="@mipmap/ic_launcher"/>
+    <item android:id="@+id/zoomOut"
+        android:title="@string/zoom_out"
+        android:icon="@mipmap/ic_launcher"/>
+</menu>
