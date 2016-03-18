@@ -46,7 +46,6 @@ public class MainActivity extends Activity {
 
         ArcGISLocalTiledLayer local = new ArcGISLocalTiledLayer(basemapPath);
 
-        // Criação do mapa
         mapView = new MapView(
                 MainActivity.this, local.getSpatialReference(), local.getFullExtent());
         mapView.addLayer(local);
