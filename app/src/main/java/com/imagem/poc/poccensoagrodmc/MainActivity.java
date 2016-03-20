@@ -116,7 +116,7 @@ public class MainActivity extends Activity {
 
         switch (item.getItemId()) {
             case R.id.zoomToFullExtent:
-                mapView.setExtent(initialExtent, 0, true);
+                mapView.setExtent(initialExtent);
                 return true;
 
             case R.id.zoomIn:
