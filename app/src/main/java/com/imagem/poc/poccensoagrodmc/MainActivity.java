@@ -1,7 +1,11 @@
 package com.imagem.poc.poccensoagrodmc;
 
 import android.app.Activity;
+import android.content.Context;
 import android.graphics.Color;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -23,8 +27,12 @@ import com.esri.core.geodatabase.Geodatabase;
 import com.esri.core.geodatabase.GeodatabaseFeatureTable;
 import com.esri.core.geodatabase.ShapefileFeatureTable;
 import com.esri.core.geometry.Geometry;
+import com.esri.core.geometry.GeometryEngine;
+import com.esri.core.geometry.MultiPoint;
 import com.esri.core.geometry.Point;
 import com.esri.core.geometry.Polygon;
+import com.esri.core.geometry.ProjectionTransformation;
+import com.esri.core.geometry.SpatialReference;
 import com.esri.core.map.CallbackListener;
 import com.esri.core.map.Feature;
 import com.esri.core.map.FeatureResult;
@@ -57,8 +65,13 @@ public class MainActivity extends Activity {
     final private String shpPath = "/storage/extSdCard/data/RiodeJaneiro/shp/";
 
     private List<GeodatabaseFeatureTable> gdbTables = null;
+    private GraphicsLayer locationLayer = null;
 
-    @Override
+    LocationManager locationManager = null;
+    LocationListener locationListener = null;
+
+
+        @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
@@ -69,6 +82,7 @@ public class MainActivity extends Activity {
         initialExtent = basemap.getExtent();
         FeatureLayer layerShpPonto = null;
         FeatureLayer layerShpLinha = null;
+        locationLayer = new GraphicsLayer();
 
         try {
             Geodatabase localGdb = new Geodatabase(gdbPath);
@@ -103,6 +117,7 @@ public class MainActivity extends Activity {
         mapView.addLayer(new FeatureLayer(gdbTables.get(1)));
         mapView.addLayer(layerShpPonto);
         mapView.addLayer(layerShpLinha);
+        mapView.addLayer(locationLayer);
 
         mViewContainer = (FrameLayout) findViewById(R.id.main_activity_view_container);
         mViewContainer.addView(mapView);
@@ -134,6 +149,14 @@ public class MainActivity extends Activity {
 
             case R.id.zoomOut:
                 mapView.zoomout();
+                return true;
+
+            case R.id.localizacao_on:
+                startLocation();
+                return true;
+
+            case R.id.localizacao_off:
+                stopLocation();
                 return true;
 
             default:
@@ -238,5 +261,89 @@ public class MainActivity extends Activity {
                 new Endereco("Aeroporto Santos Dummont", new Point(-4804787.787, -2621778.362))
         };
 
+    }
+
+    private void startLocation() {
+        if (locationManager == null) {
+            
+            locationManager =
+                    (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+
+            // Define a listener that responds to location updates
+            locationListener = new LocationListener() {
+                public void onLocationChanged(Location location) {
+                    updateLocation(location);
+                }
+
+                public void onStatusChanged(String provider, int status, Bundle extras) {
+                }
+
+                public void onProviderEnabled(String provider) {
+                }
+
+                public void onProviderDisabled(String provider) {
+                }
+            };
+
+        }
+        // Register the listener with the Location Manager to receive location updates
+        try {
+            locationManager.requestLocationUpdates(
+                    LocationManager.GPS_PROVIDER, 10000, 10, locationListener);
+        } catch (SecurityException e) {
+            Toast.makeText(getApplicationContext(),
+                    "Não possui permissão para obter dados do GPS", Toast.LENGTH_LONG).show();
+
+        }
+    }
+
+    private void updateLocation(Location location) {
+        Point locationWGS84 = new Point(location.getLongitude(),location.getLatitude());
+
+        SpatialReference wgsSR = SpatialReference.create(SpatialReference.WKID_WGS84);
+        SpatialReference webSR = SpatialReference.create(
+                SpatialReference.WKID_WGS84_WEB_MERCATOR_AUXILIARY_SPHERE_10);
+
+        Geometry locationWebM = GeometryEngine.project(locationWGS84, wgsSR, webSR);
+        Point locationPoint = (Point)locationWebM;
+
+        locationLayer.removeAll();
+
+        final SimpleMarkerSymbol locationSymbol = new SimpleMarkerSymbol(
+                Color.YELLOW, 16, SimpleMarkerSymbol.STYLE.DIAMOND);
+        locationLayer.addGraphic(new Graphic(locationWebM, locationSymbol));
+
+        final SimpleMarkerSymbol circleSymbol = new SimpleMarkerSymbol(
+                Color.YELLOW, 2, SimpleMarkerSymbol.STYLE.CIRCLE);
+        locationLayer.addGraphic(new Graphic(DrawCircle(locationPoint),circleSymbol));
+
+        mapView.zoomToScale((Point) locationWebM, selectionScale);
+    }
+
+    private void stopLocation() {
+        locationLayer.removeAll();
+        try {
+            if (locationManager != null) {
+                locationManager.removeUpdates(locationListener);
+            }
+        } catch (SecurityException e) {
+            Toast.makeText(getApplicationContext(),
+                    "Não possui permissão para obter dados do GPS", Toast.LENGTH_LONG).show();
+
+        }
+    }
+
+    private MultiPoint DrawCircle(Point center) {
+        MultiPoint multiPoint = new MultiPoint();
+        int pointsCount = 360;
+        int radius = 100;
+        double slice = 2 * Math.PI / pointsCount;
+        for (int i = 0; i <= pointsCount; i++) {
+            double rad = slice * i;
+            double px = center.getX() + radius * Math.cos(rad);
+            double py = center.getY() + radius * Math.sin(rad);
+            multiPoint.add(px, py);
+        }
+        return multiPoint;
     }
 }

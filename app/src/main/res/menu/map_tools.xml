@@ -13,4 +13,10 @@
     <item android:id="@+id/zoomOut"
         android:title="@string/zoom_out"
         android:icon="@mipmap/ic_launcher"/>
+    <item android:id="@+id/localizacao_on"
+        android:title="@string/localizacao_on"
+        android:icon="@mipmap/ic_launcher"/>
+    <item android:id="@+id/localizacao_off"
+        android:title="@string/localizacao_off"
+        android:icon="@mipmap/ic_launcher"/>
 </menu>
