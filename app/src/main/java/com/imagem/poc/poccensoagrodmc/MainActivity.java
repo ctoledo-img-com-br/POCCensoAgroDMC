@@ -25,14 +25,22 @@ import com.esri.core.geodatabase.ShapefileFeatureTable;
 import com.esri.core.geometry.Geometry;
 import com.esri.core.geometry.Point;
 import com.esri.core.geometry.Polygon;
+import com.esri.core.map.CallbackListener;
+import com.esri.core.map.Feature;
+import com.esri.core.map.FeatureResult;
 import com.esri.core.map.Graphic;
 import com.esri.core.renderer.SimpleRenderer;
 import com.esri.core.symbol.SimpleLineSymbol;
 import com.esri.core.symbol.SimpleMarkerSymbol;
+import com.esri.core.tasks.SpatialRelationship;
+import com.esri.core.tasks.ags.query.Query;
+import com.esri.core.tasks.query.QueryParameters;
 
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 public class MainActivity extends Activity {
 
@@ -48,6 +56,8 @@ public class MainActivity extends Activity {
     final private String gdbPath = "/storage/extSdCard/data/RiodeJaneiro/gdb/poc.geodatabase";
     final private String shpPath = "/storage/extSdCard/data/RiodeJaneiro/shp/";
 
+    private List<GeodatabaseFeatureTable> gdbTables = null;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -57,7 +67,6 @@ public class MainActivity extends Activity {
 
         ArcGISLocalTiledLayer basemap = new ArcGISLocalTiledLayer(basemapPath);
         initialExtent = basemap.getExtent();
-        List<GeodatabaseFeatureTable> gdbTables = null;
         FeatureLayer layerShpPonto = null;
         FeatureLayer layerShpLinha = null;
 
@@ -136,13 +145,50 @@ public class MainActivity extends Activity {
 
     private void loadGraphiLayerFromArray(Endereco[] enderecos) {
 
-        GraphicsLayer graphicsLayer = new GraphicsLayer();
+        final GraphicsLayer graphicsLayer = new GraphicsLayer();
 
-        SimpleMarkerSymbol simpleMarker = new SimpleMarkerSymbol(
-                Color.YELLOW, 16, SimpleMarkerSymbol.STYLE.CIRCLE);
+        final SimpleMarkerSymbol dentroAOI = new SimpleMarkerSymbol(
+                Color.GREEN, 16, SimpleMarkerSymbol.STYLE.CIRCLE);
 
-        for (Endereco e : enderecos) {
-            graphicsLayer.addGraphic(new Graphic(e.getPoint(), simpleMarker));
+        final SimpleMarkerSymbol foraAOI = new SimpleMarkerSymbol(
+                Color.RED, 16, SimpleMarkerSymbol.STYLE.CIRCLE);
+
+        for (final Endereco e : enderecos) {
+
+            SimpleMarkerSymbol simpleMarker = null;
+            /*
+            Executar uma querie verificado se e.getPoint() está dentro ou fora da área de
+            interesse "COD_MUN_CEP5 = '330455 20211'", se está associa o detroAOI marker
+            senão associa o foraAOI marker
+
+            A consulta é executada sobre os setores censitários pois a lista de enderecos
+            não é uma FeatureTable, é apenas uma lista de pontos com atributos em um vetor
+            apresentados em um Graphic Layer
+            */
+            QueryParameters setorOI = new QueryParameters();
+            setorOI.setWhere("COD_MUN_CEP5 = '330455 20211'");
+            setorOI.setOutFields(new String[]{"COD_MUN_CEP5"});
+            setorOI.setGeometry(e.getPoint());
+            setorOI.setSpatialRelationship(SpatialRelationship.WITHIN);
+
+            GeodatabaseFeatureTable gdbFeatureTable = gdbTables.get(0);
+            Future resultFuture = gdbFeatureTable.queryFeatures(
+                    setorOI, new CallbackListener<FeatureResult>() {
+
+                public void onError(Throwable e) {
+                    e.printStackTrace();
+                }
+
+                public void onCallback(FeatureResult featureIterator) {
+                    if (featureIterator.featureCount() > 0) {
+                        graphicsLayer.addGraphic(new Graphic(e.getPoint(), dentroAOI));;
+                    } else {
+                        graphicsLayer.addGraphic(new Graphic(e.getPoint(), foraAOI));
+                    }
+
+                }
+            });
+
         }
 
         mapView.addLayer(graphicsLayer);
