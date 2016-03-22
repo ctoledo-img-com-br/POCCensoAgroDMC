@@ -8,18 +8,21 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ListView;
 import android.widget.Toast;
 
 import com.esri.android.map.FeatureLayer;
 import com.esri.android.map.GraphicsLayer;
+import com.esri.android.map.Layer;
 import com.esri.android.map.MapView;
 import com.esri.android.map.ags.ArcGISLocalTiledLayer;
 import com.esri.android.runtime.ArcGISRuntime;
@@ -50,12 +53,13 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-public class MainActivity extends Activity {
+public class MainActivity extends AppCompatActivity {
 
     public FrameLayout mViewContainer;
     private Point p1;
     private Point p2;
     final private double selectionScale = 18055.954822;
+    final private double locationScale = 9027.977411;
     MapView mapView = null;
     Polygon initialExtent = null;
     private Toolbar toolbar;
@@ -71,14 +75,25 @@ public class MainActivity extends Activity {
     LocationListener locationListener = null;
 
 
-        @Override
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        Toolbar myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
+        setSupportActionBar(myToolbar);
+
+        final Button button = (Button) findViewById(R.id.btn_camadas);
+        button.setOnClickListener(new View.OnClickListener() {
+              public void onClick(View v) {
+                  visualizacaoCamadas(v);
+              }
+        });
+
         ArcGISRuntime.setClientId("gZK3c64UFVTUmPcI");
 
         ArcGISLocalTiledLayer basemap = new ArcGISLocalTiledLayer(basemapPath);
+        basemap.setName(getResources().getString(R.string.mapabase));
         initialExtent = basemap.getExtent();
         FeatureLayer layerShpPonto = null;
         FeatureLayer layerShpLinha = null;
@@ -95,6 +110,7 @@ public class MainActivity extends Activity {
                     new SimpleRenderer(
                             new SimpleMarkerSymbol(
                                     Color.WHITE, 10, SimpleMarkerSymbol.STYLE.TRIANGLE)));
+            layerShpPonto.setName(getResources().getString(R.string.estacoes));
 
             ShapefileFeatureTable shpLinha = new ShapefileFeatureTable(
                     shpPath + "VLT_Percurso.shp");
@@ -103,6 +119,7 @@ public class MainActivity extends Activity {
                     new SimpleRenderer(
                             new SimpleLineSymbol(
                                     Color.WHITE, (float)1.5, SimpleLineSymbol.STYLE.SOLID)));
+            layerShpLinha.setName(getResources().getString(R.string.percurso));
 
         } catch (FileNotFoundException e) {
             Toast.makeText(getApplicationContext(),
@@ -113,8 +130,15 @@ public class MainActivity extends Activity {
                 MainActivity.this, basemap.getSpatialReference(), basemap.getFullExtent());
         
         mapView.addLayer(basemap);
-        mapView.addLayer(new FeatureLayer(gdbTables.get(0)));
-        mapView.addLayer(new FeatureLayer(gdbTables.get(1)));
+
+        FeatureLayer municipiosLayer = new FeatureLayer(gdbTables.get(0));
+        municipiosLayer.setName(getResources().getString(R.string.municipios));
+        mapView.addLayer(municipiosLayer);
+
+        FeatureLayer setoresLayer = new FeatureLayer(gdbTables.get(1));
+        setoresLayer.setName(getResources().getString(R.string.setores));
+        mapView.addLayer(setoresLayer);
+
         mapView.addLayer(layerShpPonto);
         mapView.addLayer(layerShpLinha);
         mapView.addLayer(locationLayer);
@@ -179,15 +203,7 @@ public class MainActivity extends Activity {
         for (final Endereco e : enderecos) {
 
             SimpleMarkerSymbol simpleMarker = null;
-            /*
-            Executar uma querie verificado se e.getPoint() está dentro ou fora da área de
-            interesse "COD_MUN_CEP5 = '330455 20211'", se está associa o detroAOI marker
-            senão associa o foraAOI marker
 
-            A consulta é executada sobre os setores censitários pois a lista de enderecos
-            não é uma FeatureTable, é apenas uma lista de pontos com atributos em um vetor
-            apresentados em um Graphic Layer
-            */
             QueryParameters setorOI = new QueryParameters();
             setorOI.setWhere("COD_MUN_CEP5 = '330455 20211'");
             setorOI.setOutFields(new String[]{"COD_MUN_CEP5"});
@@ -214,6 +230,7 @@ public class MainActivity extends Activity {
 
         }
 
+        graphicsLayer.setName(getResources().getString(R.string.enderecos));
         mapView.addLayer(graphicsLayer);
     }
 
@@ -317,7 +334,7 @@ public class MainActivity extends Activity {
                 Color.YELLOW, 2, SimpleMarkerSymbol.STYLE.CIRCLE);
         locationLayer.addGraphic(new Graphic(DrawCircle(locationPoint),circleSymbol));
 
-        mapView.zoomToScale((Point) locationWebM, selectionScale);
+        mapView.zoomToScale((Point) locationWebM, locationScale);
     }
 
     private void stopLocation() {
@@ -346,4 +363,45 @@ public class MainActivity extends Activity {
         }
         return multiPoint;
     }
+
+    private void visualizacaoCamadas(View v) {
+        
+        PopupMenu popup = new PopupMenu(this, v);
+
+        popup.inflate(R.menu.map_layers);
+
+        Layer[] layers = mapView.getLayers();
+        for(Layer layer: layers) {
+            String layerName = layer.getName();
+            boolean layerVisibility = layer.isVisible();
+
+            for (int i = 0; i < popup.getMenu().size(); i++) {
+                if (popup.getMenu().getItem(i).getTitle() == layerName) {
+                    popup.getMenu().getItem(i).setChecked(layerVisibility);
+                }
+            }
+        }
+        popup.show();
+
+        popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+
+                Layer[] layers = mapView.getLayers();
+
+                for (Layer layer : layers) {
+                    String layerName = layer.getName();
+
+                    if (item.getTitle() == layerName) {
+                        layer.setVisible(!item.isChecked());
+                        item.setChecked(layer.isVisible());
+                    }
+
+                }
+                return false;
+            }
+        });
+    }
+
 }

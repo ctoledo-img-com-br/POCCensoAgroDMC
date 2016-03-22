@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <group android:checkableBehavior="all">
+        <item android:id="@+id/enderecos"
+            android:title="@string/enderecos"
+            android:orderInCategory="1"/>
+
+        <item android:id="@+id/estacoes"
+            android:title="@string/estacoes"
+            android:orderInCategory="2"/>
+
+        <item
+            android:id="@+id/percurso"
+            android:title="@string/percurso"
+            android:orderInCategory="3"/>
+
+        <item
+            android:id="@+id/setores"
+            android:title="@string/setores"
+            android:orderInCategory="4"/>
+
+        <item
+            android:id="@+id/municipios"
+            android:title="@string/municipios"
+            android:orderInCategory="5"/>
+
+        <item
+            android:id="@+id/mapabase"
+            android:title="@string/mapabase"
+            android:orderInCategory="6"/>
+    </group>
+</menu>
