@@ -29,6 +29,7 @@ import com.esri.android.runtime.ArcGISRuntime;
 import com.esri.core.geodatabase.Geodatabase;
 import com.esri.core.geodatabase.GeodatabaseFeatureTable;
 import com.esri.core.geodatabase.ShapefileFeatureTable;
+import com.esri.core.geometry.Envelope;
 import com.esri.core.geometry.Geometry;
 import com.esri.core.geometry.GeometryEngine;
 import com.esri.core.geometry.MultiPoint;
@@ -61,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
     final private double selectionScale = 18055.954822;
     final private double locationScale = 9027.977411;
     MapView mapView = null;
-    Polygon initialExtent = null;
+    Envelope initialExtent = null;
     private Toolbar toolbar;
 
     final private String basemapPath = "/storage/extSdCard/data/RiodeJaneiro/basemap/basemap.tpk";
@@ -94,7 +95,7 @@ public class MainActivity extends AppCompatActivity {
 
         ArcGISLocalTiledLayer basemap = new ArcGISLocalTiledLayer(basemapPath);
         basemap.setName(getResources().getString(R.string.mapabase));
-        initialExtent = basemap.getExtent();
+        initialExtent = basemap.getFullExtent();
         FeatureLayer layerShpPonto = null;
         FeatureLayer layerShpLinha = null;
         locationLayer = new GraphicsLayer();
@@ -131,11 +132,11 @@ public class MainActivity extends AppCompatActivity {
         
         mapView.addLayer(basemap);
 
-        FeatureLayer municipiosLayer = new FeatureLayer(gdbTables.get(0));
+        FeatureLayer municipiosLayer = new FeatureLayer(gdbTables.get(1));
         municipiosLayer.setName(getResources().getString(R.string.municipios));
         mapView.addLayer(municipiosLayer);
 
-        FeatureLayer setoresLayer = new FeatureLayer(gdbTables.get(1));
+        FeatureLayer setoresLayer = new FeatureLayer(gdbTables.get(0));
         setoresLayer.setName(getResources().getString(R.string.setores));
         mapView.addLayer(setoresLayer);
 
