@@ -147,7 +147,6 @@ public class MainActivity extends AppCompatActivity {
         mViewContainer = (FrameLayout) findViewById(R.id.main_activity_view_container);
         mViewContainer.addView(mapView);
 
-        // Carga de Endereços na lista e no mapa
         final Endereco enderecos[] = loadEnderecos();
         loadGraphiLayerFromArray(enderecos);
         loadListFromArray(enderecos);
