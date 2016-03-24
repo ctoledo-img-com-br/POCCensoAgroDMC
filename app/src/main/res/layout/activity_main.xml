@@ -25,11 +25,52 @@
             android:background="?attr/colorPrimary"
             />
     </android.support.v7.widget.Toolbar>
+
+
     <FrameLayout
         android:id="@+id/main_activity_view_container"
         android:layout_width="fill_parent"
         android:layout_height="0dp"
         android:layout_weight="1" />
+
+    <RelativeLayout
+        android:orientation="horizontal"
+        android:id="@+id/linearMedida"
+        android:visibility="invisible"
+        android:background="?attr/colorPrimary"
+        android:layout_width="match_parent"
+        android:layout_height="30dp">
+        <TextView
+            android:layout_marginTop="3dp"
+            android:layout_marginLeft="10dp"
+            android:textColor="@color/colorPrimaryDark"
+            android:textSize="18dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Área: " />
+        <TextView
+            android:layout_marginTop="3dp"
+            android:layout_marginLeft="65dp"
+            android:id="@+id/txtArea"
+            android:textColor="@color/colorPrimaryDark"
+            android:textSize="18dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Área" />
+        <Button
+            android:id="@+id/btnStopMeasure"
+            android:layout_marginTop="2dp"
+            android:layout_alignParentRight="true"
+            android:layout_marginRight="10dp"
+            android:gravity="right"
+            android:layout_gravity="right"
+            android:layout_width="30dp"
+            android:background="@drawable/ic_cancel_24dp"
+            android:textSize="10dp"
+            android:layout_height="30dp"
+            />
+
+    </RelativeLayout>
 
     <ListView
         android:id="@+id/listViewEnderecos"

@@ -3,6 +3,7 @@
     <string name="zoom_full">Extensão inicial</string>
     <string name="zoom_in">Zoom In</string>
     <string name="zoom_out">Zomm Out</string>
+    <string name="measure">Medir área</string>
     <string name="localizacao_on">Liga localização</string>
     <string name="localizacao_off">Desliga localização</string>
     <string name="camadas">Visualização de camadas</string>

@@ -57,13 +57,11 @@ import java.util.concurrent.Future;
 public class MainActivity extends AppCompatActivity {
 
     public FrameLayout mViewContainer;
-    private Point p1;
-    private Point p2;
+
     final private double selectionScale = 18055.954822;
     final private double locationScale = 9027.977411;
     MapView mapView = null;
     Envelope initialExtent = null;
-    private Toolbar toolbar;
 
     final private String basemapPath = "/storage/extSdCard/data/RiodeJaneiro/basemap/basemap.tpk";
     final private String gdbPath = "/storage/extSdCard/data/RiodeJaneiro/gdb/poc.geodatabase";
@@ -75,6 +73,13 @@ public class MainActivity extends AppCompatActivity {
     LocationManager locationManager = null;
     LocationListener locationListener = null;
 
+    private Measure myMeasure;
+    private Measure getMeasure(){
+        if(myMeasure == null)
+            myMeasure = new Measure(this,mapView);
+
+        return myMeasure;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -173,6 +178,10 @@ public class MainActivity extends AppCompatActivity {
 
             case R.id.zoomOut:
                 mapView.zoomout();
+                return true;
+
+            case R.id.measure:
+                enableMeasure();
                 return true;
 
             case R.id.localizacao_on:
@@ -403,5 +412,10 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
+    private void enableMeasure(){
+        getMeasure().startDraw();
+    }
+
 
 }
