@@ -13,6 +13,12 @@
     <item android:id="@+id/zoomOut"
         android:title="@string/zoom_out"
         android:icon="@mipmap/ic_launcher"/>
+    <item android:id="@+id/camadas"
+        android:title="@string/camadas"
+        android:icon="@mipmap/ic_launcher"/>
+    <item android:id="@+id/filtro"
+        android:title="@string/filtro"
+        android:icon="@mipmap/ic_launcher"/>
     <item android:id="@+id/measure"
         android:title="@string/measure"
         android:icon="@mipmap/ic_launcher"/>
