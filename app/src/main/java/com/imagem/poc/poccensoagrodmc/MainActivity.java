@@ -3,6 +3,7 @@ package com.imagem.poc.poccensoagrodmc;
 import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.res.AssetManager;
 import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationListener;
@@ -52,7 +53,13 @@ import com.esri.core.tasks.SpatialRelationship;
 import com.esri.core.tasks.ags.query.Query;
 import com.esri.core.tasks.query.QueryParameters;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -70,6 +77,7 @@ public class MainActivity extends AppCompatActivity {
     final private String basemapPath = "/storage/extSdCard/data/RiodeJaneiro/basemap/basemap.tpk";
     final private String gdbPath = "/storage/extSdCard/data/RiodeJaneiro/gdb/poc.geodatabase";
     final private String shpPath = "/storage/extSdCard/data/RiodeJaneiro/shp/";
+    final private String csvPath = "/storage/extSdCard/data/RiodeJaneiro/csv/endereco.csv";
 
     private List<GeodatabaseFeatureTable> gdbTables = null;
     private GraphicsLayer locationLayer = null;
@@ -155,7 +163,7 @@ public class MainActivity extends AppCompatActivity {
         mViewContainer = (FrameLayout) findViewById(R.id.main_activity_view_container);
         mViewContainer.addView(mapView);
 
-        enderecos = loadEnderecos();
+        enderecos = loadEnderecos(csvPath);
         loadGraphiLayerFromArray(enderecos, "");
         loadListFromArray(enderecos);
 
@@ -291,13 +299,48 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    private Endereco[] loadEnderecos() {
+    private Endereco[] loadEnderecos(String csvPath) {
+        /*
         return new Endereco[]
         {
                 new Endereco("Praça da República", new Point(-4807724.667, -2620682.984)),
                 new Endereco("Aeroporto Santos Dummont", new Point(-4804787.787, -2621778.362))
         };
+        */
 
+        ArrayList<Endereco> e = new ArrayList<>();
+        try {
+            InputStream csvStream = new FileInputStream(csvPath);
+            InputStreamReader csvStreamReader = new InputStreamReader(csvStream);
+            BufferedReader reader = new BufferedReader(csvStreamReader);
+            try {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    String[] RowData = line.split(",");
+                    String nome = RowData[0];
+                    double x = Double.parseDouble(RowData[1]);
+                    double y = Double.parseDouble(RowData[2]);
+
+                    e.add(new Endereco(nome, new Point(x, y)));
+                }
+            } catch (IOException ex) {
+                // handle exception
+            } finally {
+                try {
+                    csvStreamReader.close();
+                } catch (IOException eio) {
+                    // handle exception
+                }
+            }
+        } catch (IOException ex) {
+            Toast.makeText(getApplicationContext(),
+                    ex.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+
+
+        }
+        Endereco[] enderecos = new Endereco[e.size()];
+        enderecos = e.toArray(enderecos);
+        return enderecos;
     }
 
     private void startLocation() {
