@@ -77,10 +77,10 @@ public class MainActivity extends AppCompatActivity {
     Envelope initialExtent = null;
 
 
-    final private String basemapPath = "/sdcard/extSdCard/data/RiodeJaneiro/basemap/basemap.tpk";
-    final private String gdbPath = "/sdcard/extSdCard/data/RiodeJaneiro/gdb/poc.geodatabase";
-    final private String shpPath = "/sdcard/extSdCard/data/RiodeJaneiro/shp/";
-    final private String csvPath = "/sdcard/extSdCard/data/RiodeJaneiro/csv/endereco.csv";
+    final private String basemapPath = "/storage/extSdCard/data/RiodeJaneiro/basemap/basemap.tpk";
+    final private String gdbPath = "/storage/extSdCard/data/RiodeJaneiro/gdb/poc.geodatabase";
+    final private String shpPath = "/storage/extSdCard/data/RiodeJaneiro/shp/";
+    final private String csvPath = "/storage/extSdCard/data/RiodeJaneiro/csv/endereco.csv";
 
 
     private List<GeodatabaseFeatureTable> gdbTables = null;
@@ -463,7 +463,7 @@ public class MainActivity extends AppCompatActivity {
 
         final SimpleMarkerSymbol circleSymbol = new SimpleMarkerSymbol(
                 Color.YELLOW, 2, SimpleMarkerSymbol.STYLE.CIRCLE);
-        locationLayer.addGraphic(new Graphic(DrawCircle(locationPoint),circleSymbol));
+        locationLayer.addGraphic(new Graphic(DrawCircle(locationPoint), circleSymbol));
 
         mapView.zoomToScale((Point) locationWebM, locationScale);
     }
@@ -591,7 +591,7 @@ public class MainActivity extends AppCompatActivity {
         builderSingle.setAdapter(arrayAdapter, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                if(isPopup)
+                if (isPopup)
                     showPopup(graphics[which]);
                 else
                     showInfoWindow(graphics[which]);
