@@ -38,20 +38,10 @@ public class Measure {
             }
         });
         this.myLayout = (RelativeLayout)((Activity)context).findViewById(R.id.linearMedida);
-        mapView.setOnSingleTapListener(new OnSingleTapListener() {
-            @Override
-            public void onSingleTap(float x, float y) {
-                if (enableSketching) {
-                    try {
-                        singleTapAct(x, y);
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                    }
-                }
-            }
-        });
+
+
     }
-    boolean enableSketching;
+    public boolean enableSketching;
     Context mainContext;
     MapView mapView;
     double measure;

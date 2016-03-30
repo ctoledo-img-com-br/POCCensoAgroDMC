@@ -1,15 +1,13 @@
 package com.imagem.poc.poccensoagrodmc;
 
-import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.res.AssetManager;
 import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.Toolbar;
@@ -22,7 +20,9 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.esri.android.map.FeatureLayer;
@@ -30,7 +30,12 @@ import com.esri.android.map.GraphicsLayer;
 import com.esri.android.map.Layer;
 import com.esri.android.map.MapView;
 import com.esri.android.map.ags.ArcGISLocalTiledLayer;
+import com.esri.android.map.event.OnLongPressListener;
+import com.esri.android.map.event.OnSingleTapListener;
+import com.esri.android.map.popup.Popup;
+import com.esri.android.map.popup.PopupContainer;
 import com.esri.android.runtime.ArcGISRuntime;
+import com.esri.android.toolkit.map.MapViewHelper;
 import com.esri.core.geodatabase.Geodatabase;
 import com.esri.core.geodatabase.GeodatabaseFeatureTable;
 import com.esri.core.geodatabase.ShapefileFeatureTable;
@@ -39,30 +44,27 @@ import com.esri.core.geometry.Geometry;
 import com.esri.core.geometry.GeometryEngine;
 import com.esri.core.geometry.MultiPoint;
 import com.esri.core.geometry.Point;
-import com.esri.core.geometry.Polygon;
-import com.esri.core.geometry.ProjectionTransformation;
 import com.esri.core.geometry.SpatialReference;
 import com.esri.core.map.CallbackListener;
-import com.esri.core.map.Feature;
 import com.esri.core.map.FeatureResult;
 import com.esri.core.map.Graphic;
+import com.esri.core.map.popup.PopupInfo;
 import com.esri.core.renderer.SimpleRenderer;
 import com.esri.core.symbol.SimpleLineSymbol;
 import com.esri.core.symbol.SimpleMarkerSymbol;
 import com.esri.core.tasks.SpatialRelationship;
-import com.esri.core.tasks.ags.query.Query;
 import com.esri.core.tasks.query.QueryParameters;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
+import java.util.Map;
 import java.util.concurrent.Future;
 
 public class MainActivity extends AppCompatActivity {
@@ -74,18 +76,21 @@ public class MainActivity extends AppCompatActivity {
     MapView mapView = null;
     Envelope initialExtent = null;
 
-    final private String basemapPath = "/storage/extSdCard/data/RiodeJaneiro/basemap/basemap.tpk";
-    final private String gdbPath = "/storage/extSdCard/data/RiodeJaneiro/gdb/poc.geodatabase";
-    final private String shpPath = "/storage/extSdCard/data/RiodeJaneiro/shp/";
-    final private String csvPath = "/storage/extSdCard/data/RiodeJaneiro/csv/endereco.csv";
+
+    final private String basemapPath = "/sdcard/extSdCard/data/RiodeJaneiro/basemap/basemap.tpk";
+    final private String gdbPath = "/sdcard/extSdCard/data/RiodeJaneiro/gdb/poc.geodatabase";
+    final private String shpPath = "/sdcard/extSdCard/data/RiodeJaneiro/shp/";
+    final private String csvPath = "/sdcard/extSdCard/data/RiodeJaneiro/csv/endereco.csv";
+
 
     private List<GeodatabaseFeatureTable> gdbTables = null;
     private GraphicsLayer locationLayer = null;
-    private GraphicsLayer graphicsLayer = null;
     private Endereco[] enderecos = null;
 
     LocationManager locationManager = null;
     LocationListener locationListener = null;
+
+    PopupContainer popupContainer;
 
     private Measure myMeasure;
     private Measure getMeasure(){
@@ -95,6 +100,10 @@ public class MainActivity extends AppCompatActivity {
         return myMeasure;
     }
 
+
+    MapViewHelper mapViewHelper;
+    final GraphicsLayer graphicsLayer = new GraphicsLayer();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -103,9 +112,11 @@ public class MainActivity extends AppCompatActivity {
         Toolbar myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
         setSupportActionBar(myToolbar);
 
+
+
         ArcGISRuntime.setClientId("gZK3c64UFVTUmPcI");
 
-        graphicsLayer = new GraphicsLayer();
+
         graphicsLayer.setName(getResources().getString(R.string.enderecos));
 
         ArcGISLocalTiledLayer basemap = new ArcGISLocalTiledLayer(basemapPath);
@@ -144,7 +155,7 @@ public class MainActivity extends AppCompatActivity {
 
         mapView = new MapView(
                 MainActivity.this, basemap.getSpatialReference(), basemap.getFullExtent());
-        
+
         mapView.addLayer(basemap);
 
         FeatureLayer municipiosLayer = new FeatureLayer(gdbTables.get(1));
@@ -163,11 +174,68 @@ public class MainActivity extends AppCompatActivity {
         mViewContainer = (FrameLayout) findViewById(R.id.main_activity_view_container);
         mViewContainer.addView(mapView);
 
+
         enderecos = loadEnderecos(csvPath);
         loadGraphiLayerFromArray(enderecos, "");
+
         loadListFromArray(enderecos);
 
+
+        mapViewHelper = new MapViewHelper(mapView);
+
+
+        mapView.setOnLongPressListener(new OnLongPressListener() {
+            @Override
+            public boolean onLongPress(float v, float v1) {
+
+                    int[] ids = graphicsLayer.getGraphicIDs(v, v1, 10);
+                    if (ids.length > 0) {
+                        Graphic[] graphics = new Graphic[ids.length];
+                        for (int i = 0; i < ids.length; i++) {
+                            Graphic graphic = graphicsLayer.getGraphic(ids[i]);
+                            graphics[i] = graphic;
+                        }
+
+                        if (ids.length > 1)
+                            selectEndereco(graphics, true);
+                        else
+                            showPopup(graphics[0]);
+
+                    }
+
+                return false;
+            }
+        });
+
+
+        mapView.setOnSingleTapListener(new OnSingleTapListener() {
+            @Override
+            public void onSingleTap(float v, float v1) {
+                if (getMeasure().enableSketching) {
+                    try {
+                        getMeasure().singleTapAct(v, v1);
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                }else {
+                    int[] ids = graphicsLayer.getGraphicIDs(v, v1, 10);
+                    if (ids.length > 0) {
+                        Graphic[] graphics = new Graphic[ids.length];
+                        for (int i = 0; i < ids.length; i++) {
+                            Graphic graphic = graphicsLayer.getGraphic(ids[i]);
+                            graphics[i] = graphic;
+                        }
+
+                        if (ids.length > 1)
+                            selectEndereco(graphics, false);
+                        else
+                            showInfoWindow(graphics[0]);
+                    }
+                }
+            }
+        });
     }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -220,6 +288,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void loadGraphiLayerFromArray(Endereco[] enderecos, String setorCensitario) {
 
+
         graphicsLayer.removeAll();
 
         final SimpleMarkerSymbol dentroAOI = new SimpleMarkerSymbol(
@@ -244,21 +313,26 @@ public class MainActivity extends AppCompatActivity {
             Future resultFuture = gdbFeatureTable.queryFeatures(
                     setorOI, new CallbackListener<FeatureResult>() {
 
-                public void onError(Throwable e) {
-                    e.printStackTrace();
-                }
-
-                public void onCallback(FeatureResult featureIterator) {
-                    if (featureIterator.featureCount() > 0) {
-                        graphicsLayer.addGraphic(new Graphic(e.getPoint(), dentroAOI));
-                    } else {
-                        graphicsLayer.addGraphic(new Graphic(e.getPoint(), foraAOI));
-                    }
-
-                }
-            });
+                        public void onError(Throwable e) {
+                            e.printStackTrace();
+                        }
+                        public void onCallback(FeatureResult featureIterator){
+                            Graphic graphic;
+                            Map<String, Object> attributes = new HashMap<>();
+                            attributes.put("NOME", e.getNome());
+                            if (featureIterator.featureCount() > 0) {
+                                graphic = new Graphic(e.getPoint(), dentroAOI,attributes);
+                            } else {
+                                graphic= new Graphic(e.getPoint(), foraAOI,attributes);
+                            }
+                            graphicsLayer.addGraphic(graphic);
+                        }
+                    });
 
         }
+
+        graphicsLayer.setName(getResources().getString(R.string.enderecos));
+        mapView.addLayer(graphicsLayer);
 
     }
 
@@ -300,13 +374,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     private Endereco[] loadEnderecos(String csvPath) {
-        /*
-        return new Endereco[]
-        {
-                new Endereco("Praça da República", new Point(-4807724.667, -2620682.984)),
-                new Endereco("Aeroporto Santos Dummont", new Point(-4804787.787, -2621778.362))
-        };
-        */
+
 
         ArrayList<Endereco> e = new ArrayList<>();
         try {
@@ -345,7 +413,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void startLocation() {
         if (locationManager == null) {
-            
+
             locationManager =
                     (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
 
@@ -428,7 +496,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void visualizacaoCamadas(View v) {
-        
+
         PopupMenu popup = new PopupMenu(this, v);
 
         popup.inflate(R.menu.map_layers);
@@ -469,6 +537,78 @@ public class MainActivity extends AppCompatActivity {
 
     private void enableMeasure(){
         getMeasure().startDraw();
+    }
+
+
+    private void showInfoWindow(final Graphic graphic){
+
+        mapView.centerAt((Point)graphic.getGeometry(),true);
+
+        View content = MainActivity.this.getLayoutInflater().inflate(R.layout.info_window,null);
+        TextView text = (TextView)content.findViewById(android.R.id.text1);
+        text.setText(graphic.getAttributes().get("NOME").toString());
+
+        TextView txtZoom = (TextView)content.findViewById(R.id.txtZoom);
+        TextView txtMore = (TextView)content.findViewById(R.id.txtMore);
+        ImageButton btnClose = (ImageButton) content.findViewById(R.id.btnClose);
+
+        btnClose.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mapView.getCallout().hide();
+            }
+        });
+
+        txtZoom.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mapView.zoomTo((Point) graphic.getGeometry(), 8);
+            }
+        });
+
+        txtMore.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showPopup(graphic);
+            }
+        });
+
+
+        mapView.getCallout().animatedShow((Point) graphic.getGeometry(), content);
+    }
+
+    public void selectEndereco(final Graphic[] graphics,final boolean isPopup){
+        AlertDialog.Builder builderSingle = new AlertDialog.Builder(MainActivity.this);
+        builderSingle.setTitle("Selecione um endereço");
+
+        final ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(
+                MainActivity.this,
+                android.R.layout.select_dialog_singlechoice);
+        for(int i=0;i<graphics.length;i++){
+            arrayAdapter.add(graphics[i].getAttributes().get("NOME").toString());
+        }
+
+        builderSingle.setAdapter(arrayAdapter, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                if(isPopup)
+                    showPopup(graphics[which]);
+                else
+                    showInfoWindow(graphics[which]);
+            }
+        });
+
+        builderSingle.show();
+    }
+
+
+    private void showPopup(Graphic graphic) {
+        PopupInfo popupinfo = new PopupInfo();
+        popupinfo.setTitle(graphic.getAttributes().get("NOME").toString());
+        Popup popup = new Popup(mapView, popupinfo, graphic);
+        CustomPopup mPopupFragment = new CustomPopup(mapView);
+        mPopupFragment.addPopup(popup);
+        mPopupFragment.show();
     }
 
     private void filtroSetorCensitario() {
