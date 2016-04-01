@@ -89,10 +89,12 @@ public class MainActivity extends AppCompatActivity {
     int setRadius = 100;
 
 
+
     final private String basemapPath = Environment.getExternalStorageDirectory()+ "/RiodeJaneiro/basemap/basemap.tpk";
     final private String gdbPath = Environment.getExternalStorageDirectory()+ "/RiodeJaneiro/gdb/poc.geodatabase";
     final private String shpPath = Environment.getExternalStorageDirectory()+ "/RiodeJaneiro/shp/";
     final private String csvPath = Environment.getExternalStorageDirectory()+ "/RiodeJaneiro/csv/endereco.csv";
+
 
 
     private List<GeodatabaseFeatureTable> gdbTables = null;
@@ -492,9 +494,11 @@ public class MainActivity extends AppCompatActivity {
                 Color.YELLOW, 16, SimpleMarkerSymbol.STYLE.DIAMOND);
         locationLayer.addGraphic(new Graphic(locationWebM, locationSymbol));
 
+
         final SimpleFillSymbol circleSymbol = new SimpleFillSymbol(Color.argb(0,255,255,255));
         circleSymbol.setOutline(new SimpleLineSymbol(Color.YELLOW,3));
         locationLayer.addGraphic(new Graphic(DrawCircle(locationPoint, setRadius), circleSymbol));
+
 
         mapView.zoomToScale((Point) locationWebM, locationScale);
     }
