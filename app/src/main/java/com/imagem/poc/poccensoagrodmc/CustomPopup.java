@@ -20,6 +20,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import com.esri.android.map.Layer;
 import com.esri.android.map.MapView;
@@ -87,6 +88,7 @@ public class CustomPopup extends Fragment {
 
             if (mPopupContainer != null) {
                 view = mPopupContainer.getPopupContainerView();
+
                 view.setOnPageChangelistener(new OnPageChangeListener() {
 
                     @Override
@@ -107,11 +109,16 @@ public class CustomPopup extends Fragment {
                     }
                 });
             }
+
             return view;
         }
 
+        private void increaseTextSize(View view){
 
+        }
         public void addPopup(Popup popup) {
+
+
             if (mPopupContainer != null)
                 mPopupContainer.addPopup(popup);
         }
